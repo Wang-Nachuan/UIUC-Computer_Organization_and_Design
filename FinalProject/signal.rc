@@ -1,0 +1,148 @@
+Magic 271485
+Revision Verdi_R-2020.12-SP1-1
+
+; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
+viewPort 0 25 2333 846 217 187
+
+; File list:
+; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
+openDirFile -d / "" "/home/nachuan3/Course/ECE411_FinalProject/sim/dump.fsdb"
+
+; file time scale:
+; fileTimeScale ### s|ms|us|ns|ps
+
+; signal spacing:
+signalSpacing 5
+
+; windowTimeUnit is used for zoom, cursor & marker
+; waveform viewport range
+zoom 596085.759327 881263.478718
+cursor 765000.000000
+marker 0.000000
+
+; user define markers
+; userMarker time_pos marker_name color linestyle
+; visible top row signal index
+top 0
+; marker line index
+markerPos 89
+
+; event list
+; addEvent event_name event_expression
+; curEvent event_name
+
+
+
+COMPLEX_EVENT_BEGIN
+
+
+COMPLEX_EVENT_END
+
+
+
+; toolbar current search type
+; curSTATUS search_type
+curSTATUS ByChange
+
+
+addGroup "G1"
+activeDirFile "" "/home/nachuan3/Course/ECE411_FinalProject/sim/dump.fsdb"
+addSignal -h 15 /mp4_tb/dut/i_cpu/i_inst_queue/rst
+addSignal -h 15 /mp4_tb/dut/i_cpu/i_regfile/clk
+addGroup "G2" -e FALSE
+addGroup "ROB" -e FALSE
+addSignal -h 15 /mp4_tb/dut/i_cpu/i_rob/p_inst_old[2:0]
+addSignal -h 15 -holdScope p_inst_new[2:0]
+addSignal -h 15 -holdScope valid[7:0]
+addSignal -h 15 -holdScope commit_rf_en
+addSignal -h 15 -holdScope commit_rd[4:0]
+addSignal -h 15 -holdScope commit_data[31:0]
+addSignal -h 15 -holdScope flag_commit_i
+addSignal -h 15 -holdScope isfinish[7:0]
+addSignal -expanded -h 15 -holdScope cdb_data_out
+addSignal -h 15 -holdScope cdb_data_out.valid
+addSignal -h 15 -holdScope cdb_data_out.data[31:0]
+addSignal -h 15 -holdScope cdb_data_out.id[2:0]
+addGroup "Regfile"
+addSignal -h 15 -UNSIGNED -UDEC /mp4_tb/dut/i_cpu/i_regfile/data[31:0]
+addSignal -h 15 -holdScope rf_sr1_rdy
+addSignal -h 15 -holdScope rf_sr2_rdy
+addSignal -h 15 -holdScope rf_sr1_id[2:0]
+addSignal -h 15 -holdScope rf_sr2_id[2:0]
+addSignal -h 15 -holdScope rf_sr1_val[31:0]
+addSignal -h 15 -holdScope rf_sr2_val[31:0]
+addGroup "Issuer"
+addSignal -h 15 /mp4_tb/dut/i_cpu/i_regfile/issue_req
+addSignal -h 15 -UNSIGNED -HEX /mp4_tb/dut/i_cpu/i_rob/rob_id[2:0]
+addSubGroup "Out"
+addSignal -h 15 -UNSIGNED /mp4_tb/dut/i_cpu/i_issuer/issue_type[1:0]
+addSignal -h 15 -UNSIGNED -holdScope issue_opc_rs1[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope issue_rd[4:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope issue_sr1[4:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope issue_sr2[4:0]
+endSubGroup "Out"
+addSubGroup "Inst" -e FALSE
+addSignal -h 15 -UNSIGNED /mp4_tb/dut/i_cpu/i_issuer/opcode[6:0]
+addSignal -h 15 -UNSIGNED -holdScope arith_funct3[2:0]
+addSignal -h 15 -holdScope issue_i_imm[31:0]
+endSubGroup "Inst"
+addGroup "RS1" -e FALSE
+addSubGroup "In" -e FALSE
+addSignal -h 15 /mp4_tb/dut/i_cpu/i_rs1/issue_en
+addSignal -h 15 -UNSIGNED -HEX -holdScope rs_id_in[2:0]
+addSignal -h 15 -holdScope rs_opr1_rdy
+addSignal -h 15 -holdScope rs_opr2_rdy
+addSignal -h 15 -holdScope rs_opr1_id[2:0]
+addSignal -h 15 -holdScope rs_opr2_id[2:0]
+addSignal -h 15 -holdScope rs_opr1_val[31:0]
+addSignal -h 15 -holdScope rs_opr2_val[31:0]
+endSubGroup "In"
+addSubGroup "Out" -e FALSE
+addSignal -h 15 /mp4_tb/dut/i_cpu/i_rs1/exe_resp
+addSignal -h 15 -holdScope exe_finish
+addSignal -h 15 -holdScope rs_exe_req
+addSignal -h 15 -holdScope rs_isfull
+addSignal -h 15 /mp4_tb/dut/i_cpu/i_issuer/issue_en_rs1
+addSignal -h 15 -UNSIGNED -holdScope arith_funct3[2:0]
+addSignal -h 15 -UNSIGNED -holdScope opcode[6:0]
+endSubGroup "Out"
+addSubGroup "State" -e FALSE
+addSignal -h 15 /mp4_tb/dut/i_cpu/i_rs1/id[3:0]
+addSignal -h 15 -holdScope exe[3:0]
+addSignal -expanded -h 15 -UNSIGNED -HEX -holdScope opr1_rdy[3:0]
+addSignal -h 15 -holdScope opr1_rdy[3]
+addSignal -h 15 -holdScope opr1_rdy[2]
+addSignal -h 15 -holdScope opr1_rdy[1]
+addSignal -h 15 -holdScope opr1_rdy[0]
+addSignal -expanded -h 15 -holdScope opr2_rdy[3:0]
+addSignal -h 15 -holdScope opr2_rdy[3]
+addSignal -h 15 -holdScope opr2_rdy[2]
+addSignal -h 15 -holdScope opr2_rdy[1]
+addSignal -h 15 -holdScope opr2_rdy[0]
+addSignal -h 15 -holdScope opr1_val[3:0]
+addSignal -h 15 -holdScope opr2_val[3:0]
+addSignal -h 15 -holdScope cursor_exe_i[1:0]
+addSignal -h 15 -holdScope cursor_exe_valid_i
+addSignal -h 15 -holdScope cursor_issue_i[1:0]
+endSubGroup "State"
+addGroup "CDB" -e FALSE
+addSignal -h 15 /mp4_tb/dut/i_cpu/i_cdb/cdb_data_in
+addSignal -h 15 -holdScope cdb_flush_in
+addSignal -expanded -h 15 -holdScope cdb_data_out
+addSignal -h 15 -holdScope cdb_data_out.valid
+addSignal -h 15 -UNSIGNED -HEX -holdScope cdb_data_out.data[31:0]
+addSignal -h 15 -holdScope cdb_data_out.id[2:0]
+addSignal -h 15 -holdScope cdb_flush_out
+addGroup "G7" -e FALSE
+addSignal -h 15 /mp4_tb/dut/i_cpu/i_inst_queue/count[3:0]
+addSignal -h 15 -holdScope fetch_wen_inst
+addSignal -h 15 -holdScope issue_req
+addSignal -h 15 -holdScope iq_rvalid
+addGroup "G9"
+addSignal -h 15 /mp4_tb/p_start[2:0]
+addSignal -h 15 -holdScope p_end[2:0]
+addGroup "G10"
+
+; getSignalForm Scope Hierarchy Status
+; active file of getSignalForm
+

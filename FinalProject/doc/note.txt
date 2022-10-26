@@ -1,0 +1,32 @@
+ROB:
+    在ROB满时commit，is_full应当在同一周期为0
+    ROB不处理溢出的情况，需要isuuer检查is_full信号
+    如果is_full为0且issuer要issue，则数据要在本cycle输入而不是下个cycle
+    
+    branch的valid是在cmp获得cdb控制权时再为1(需要最高优先权)
+    store在完成后会写一个空值到ROB里
+    *** flush的同时应当可以commit regfile和写入rob!!!
+    *** flush时regfile里的dependence要么改变要么置零
+
+Load/store queue:
+    注意commit_ls_en的持续时间
+
+Regfile:
+    see wheter two-if is valid
+
+RS:
+    auipc读的值是instruction queue里的pc-4
+    连续if的写法？
+    不需要的oprand的rdy信号一开始就是1
+    默认opr1存sr1
+    exe_finish必须在写入cdb的同一个cycle置1
+
+ALU:
+    ALU should also be flushed
+    exe_finish的时序?
+
+make sim/simv
+make run ASM=./testcode/self/cpu_reg.s
+./run_verdi.sh &
+make synth
+make synth-gui
