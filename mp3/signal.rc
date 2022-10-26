@@ -1,0 +1,94 @@
+Magic 271485
+Revision Verdi_R-2020.12-SP1-1
+
+; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
+viewPort 0 25 2560 843 206 198
+
+; File list:
+; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
+openDirFile -d / "" "/home/nachuan3/Course/ECE411/mp3/sim/dump.fsdb"
+
+; file time scale:
+; fileTimeScale ### s|ms|us|ns|ps
+
+; signal spacing:
+signalSpacing 5
+
+; windowTimeUnit is used for zoom, cursor & marker
+; waveform viewport range
+zoom 774809.358666 869096.682609
+cursor 784500.000000
+marker 0.000000
+
+; user define markers
+; userMarker time_pos marker_name color linestyle
+; visible top row signal index
+top 1
+; marker line index
+markerPos 3
+
+; event list
+; addEvent event_name event_expression
+; curEvent event_name
+
+
+
+COMPLEX_EVENT_BEGIN
+
+
+COMPLEX_EVENT_END
+
+
+
+; toolbar current search type
+; curSTATUS search_type
+curSTATUS ByChange
+
+
+addGroup "cache"
+activeDirFile "" "/home/nachuan3/Course/ECE411/mp3/sim/dump.fsdb"
+addSignal -h 15 /mp3_tb/dut/cache/clk
+addSignal -h 15 /mp3_tb/dut/cacheline_adaptor/write_o
+addSignal -h 15 -holdScope resp_i
+addSignal -h 15 /mp3_tb/dut/cache/rst
+addSignal -h 15 -holdScope mem_address[31:0]
+addSignal -h 15 -holdScope mem_rdata[31:0]
+addSignal -h 15 -holdScope mem_wdata[31:0]
+addSignal -h 15 -holdScope mem_read
+addSignal -h 15 -holdScope mem_write
+addSignal -h 15 -holdScope mem_byte_enable[3:0]
+addSignal -h 15 -holdScope mem_resp
+addSignal -h 15 -holdScope pmem_address[31:0]
+addSignal -h 15 -holdScope pmem_rdata[255:0]
+addSignal -h 15 -holdScope pmem_wdata[255:0]
+addSignal -h 15 -holdScope pmem_read
+addSignal -h 15 -holdScope pmem_write
+addSignal -h 15 -holdScope pmem_resp
+addGroup "Cache State"
+addSignal -h 15 -UNSIGNED /mp3_tb/dut/cache/control/state[31:0]
+addGroup "RegFile"
+addSignal -expanded -h 15 /mp3_tb/dut/cpu/datapath/regfile/data[0:31]
+addSignal -h 15 -holdScope data[0][31:0]
+addSignal -h 15 -holdScope data[1][31:0]
+addSignal -h 15 -holdScope data[2][31:0]
+addSignal -h 15 -holdScope data[3][31:0]
+addGroup "G4"
+addSignal -h 15 /mp3_tb/dut/cache/datapath/genblk1[0]/data/data[7:0]
+addSignal -expanded -h 15 /mp3_tb/dut/cache/datapath/genblk1[1]/data/data[7:0]
+addSignal -h 15 -holdScope data[7][255:0]
+addSignal -h 15 -holdScope data[6][255:0]
+addSignal -h 15 -holdScope data[5][255:0]
+addSignal -h 15 -holdScope data[4][255:0]
+addSignal -h 15 -holdScope data[3][255:0]
+addSignal -h 15 -holdScope data[2][255:0]
+addSignal -h 15 -holdScope data[1][255:0]
+addSignal -h 15 -holdScope data[0][255:0]
+addSignal -expanded -h 15 /mp3_tb/dut/cache/datapath/is_tag_equal[1:0]
+addSignal -h 15 -holdScope is_tag_equal[1]
+addSignal -h 15 -holdScope is_tag_equal[0]
+addSignal -h 15 -holdScope index[2:0]
+addGroup "G5"
+
+; getSignalForm Scope Hierarchy Status
+; active file of getSignalForm
+
