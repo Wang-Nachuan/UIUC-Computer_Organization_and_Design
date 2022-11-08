@@ -16,6 +16,14 @@ import rv32i_types::*;
     output logic rob_isfull,
     output logic [$clog2(size)-1:0] rob_id,
 
+    // At issue stage Check whether the dependence is resolved (but not commited yet)
+    input logic [$clog2(size)-1:0] rf_sr1_id,
+    input logic [$clog2(size)-1:0] rf_sr2_id,
+    output logic rob_sr1_rdy,
+    output logic [31:0] rob_sr1_val,
+    output logic rob_sr2_rdy,
+    output logic [31:0] rob_sr2_val,
+
     // Write value
     input cdb_data cdb_data_out,
 
@@ -24,9 +32,10 @@ import rv32i_types::*;
     output logic commit_rf_en,
     output logic [4:0] commit_rd,
     output logic [31:0] commit_data,
+    output logic [$clog2(size)-1:0] commit_id,
     // Load/store queue
-    output logic commit_ls_en,
-    output logic [$clog2(size)-1:0] commit_ls_id,
+    output logic commit_lsq_en,
+    output logic [$clog2(size)-1:0] commit_lsq_id,
 
     // Flush
     input logic br_valid,
@@ -58,6 +67,7 @@ logic [size-1:0] ls_active, ls_active_n;        // 1-The load/store instruction 
 logic flag_commit_i;                // 1-Commit in this cycle
 logic flag_flush_i;                 // 1-Flush in this cycle
 logic [size-1:0] flag_inrange_flush_i;    // 1-Line i is within the flush interval (and hence need to be flushed)
+logic [size-1:0] flag_inrange_unflush_i;
 
 // Other signals
 logic [31:0] pc_i, pc_i_n;
@@ -65,15 +75,6 @@ logic [31:0] pc_i, pc_i_n;
 assign flag_commit_i = valid[p_inst_old] & isfinish[p_inst_old];
 assign flag_flush_i = br_valid & valid[br_id] & (addr[br_id] != br_addr);
 assign rob_pc = pc_i;
-
-always_comb begin
-    for (int i=0; i<size; i++) begin
-        if (br_id <= p_inst_new)
-            flag_inrange_flush_i[i] = (i[$clog2(size)-1:0] > br_id) && (i[$clog2(size)-1:0] < p_inst_new) ? 1'b1: 1'b0;
-        else 
-            flag_inrange_flush_i[i] = (i[$clog2(size)-1:0] > br_id) || (i[$clog2(size)-1:0] < p_inst_new) ? 1'b1: 1'b0;
-    end
-end
 
 // Update internal state (ff)
 always_ff @(posedge clk) begin
@@ -150,6 +151,8 @@ always_comb begin
 
     // Flush
     if (flag_flush_i) begin
+        p_inst_new_n = br_id + {{($clog2(size)-1){1'b0}}, 1'b1};
+        addr_n[br_id] = br_addr;
         for (int i=0; i<size; i++) begin
             if (flag_inrange_flush_i[i]) begin
                 valid_n[i] = 1'b0;
@@ -161,16 +164,32 @@ end
 // Generate output
 always_comb begin
     // Flush
+    // for (int i=0; i<size; i++) begin
+    //     if (br_id <= p_inst_new)
+    //         flag_inrange_flush_i[i] = (i[$clog2(size)-1:0] > br_id) && (i[$clog2(size)-1:0] < p_inst_new) ? 1'b1: 1'b0;
+    //     else 
+    //         flag_inrange_flush_i[i] = (i[$clog2(size)-1:0] > br_id) || (i[$clog2(size)-1:0] < p_inst_new) ? 1'b1: 1'b0;
+    // end
+    for (int i=0; i<size; i++) begin
+        if (br_id >= p_inst_old)
+            flag_inrange_unflush_i[i] = (i[$clog2(size)-1:0] >= p_inst_old) && (i[$clog2(size)-1:0] <= br_id) ? 1'b1: 1'b0;
+        else 
+            flag_inrange_unflush_i[i] = (i[$clog2(size)-1:0] >= p_inst_old) || (i[$clog2(size)-1:0] <= br_id) ? 1'b1: 1'b0;
+    end
+    flag_inrange_flush_i = ~ flag_inrange_unflush_i;
     cdb_flush_in.en = flag_flush_i;
     cdb_flush_in.en_id = flag_inrange_flush_i;
 
     // Update regfile dependence
     for (int i=0; i<32; i++) begin
-        flush_dep_rf_en[i] = 1'b0;
-        flush_dep_rf[i] = {$clog2(size){1'b0}};
+        flush_dep_rf_en[i] = 1'b0;      // 1-Has dependency
+        flush_dep_rf[i] = {$clog2(size){1'b0}};     // Id of dependent instruction
         for (int j=0; j<size; j++) begin
-            if ((~ flag_inrange_flush_i[br_id - j]) && valid[br_id - j]) begin
-                if (isrd[br_id - j] && (rd[br_id - j] == i[4:0])) begin
+            // Search in all unflushed instructions
+            if ((flag_inrange_unflush_i[br_id - j[$clog2(size)-1:0]]) && valid[br_id - j[$clog2(size)-1:0]]) begin
+                // If the instruction is commited in this cycle, skip it
+                if (isrd[br_id - j[$clog2(size)-1:0]] && (rd[br_id - j[$clog2(size)-1:0]] == i[4:0])
+                    && ~(flag_commit_i && p_inst_old == (br_id - j[$clog2(size)-1:0]))) begin
                     flush_dep_rf_en[i] = 1'b1;
                     flush_dep_rf[i] = br_id - j[$clog2(size)-1:0];
                     break;
@@ -184,17 +203,24 @@ always_comb begin
     rob_id = p_inst_new;
 
     // Commit load/store
-    commit_ls_en = 1'b0;
-    commit_ls_id = {$clog2(size){1'b0}};
+    commit_lsq_en = 1'b0;
+    commit_lsq_id = {$clog2(size){1'b0}};
     if (valid[p_inst_old] && (itype[p_inst_old] == itype_ls) && (~ ls_active[p_inst_old])) begin
-        commit_ls_en = 1'b1; 
-        commit_ls_id = p_inst_old;
+        commit_lsq_en = 1'b1; 
+        commit_lsq_id = p_inst_old;
     end
 
     // Commit regfile
     commit_rf_en = isrd[p_inst_old] ? flag_commit_i : 1'b0;
     commit_rd = rd[p_inst_old];
     commit_data = data[p_inst_old];
+    commit_id = p_inst_old;
+
+    // At issue stage Check whether the dependence is resolved (but not commited yet)
+    rob_sr1_rdy = isfinish[rf_sr1_id];
+    rob_sr1_val = data[rf_sr1_id];
+    rob_sr2_rdy = isfinish[rf_sr2_id];
+    rob_sr2_val = data[rf_sr2_id];
 end
 
 endmodule : rob

@@ -17,6 +17,7 @@ import rv32i_types::*;
     input logic commit_rf_en,
     input logic [4:0] commit_rd,
     input logic [31:0] commit_data,
+    input logic [LEN_ID-1:0] commit_id,
 
     // Flush
     input logic flush_rf_en,
@@ -70,7 +71,8 @@ always_comb begin
 
     // Commit
     if (commit_rf_en && commit_rd) begin
-        isdep_n[commit_rd] = 1'b0;
+        if (isdep[commit_rd] && commit_id == id[commit_rd])
+            isdep_n[commit_rd] = 1'b0;
         data_n[commit_rd] = commit_data;
     end
 
@@ -87,16 +89,39 @@ always_comb begin
     end
 end
 
+// commit x1
+// issue x1, x1
 
 always_comb begin
     // sr1
-    rf_sr1_rdy = ~ isdep[issue_sr1];
     rf_sr1_id = id[issue_sr1];
-    rf_sr1_val = data[issue_sr1];
+    // If commit and read happen in same cycle
+    if (commit_rf_en && commit_rd && (commit_rd == issue_sr1)) begin
+        // If the commit id equals to dependent id
+        if (isdep[commit_rd] && commit_id == id[commit_rd])
+            rf_sr1_rdy = 1'b1;
+        else
+            rf_sr1_rdy = 1'b0;
+        rf_sr1_val = data_n[issue_sr1];
+    end
+    else begin
+        rf_sr1_rdy = ~ isdep[issue_sr1];
+        rf_sr1_val = data[issue_sr1];
+    end
+    
     // sr2
-    rf_sr2_rdy = ~ isdep[issue_sr2];
     rf_sr2_id = id[issue_sr2];
-    rf_sr2_val = data[issue_sr2];
+    if (commit_rf_en && commit_rd && (commit_rd == issue_sr2)) begin
+        if (isdep[commit_rd] && commit_id == id[commit_rd])
+            rf_sr2_rdy = 1'b1;
+        else
+            rf_sr2_rdy = 1'b0;
+        rf_sr2_val = data_n[issue_sr2];
+    end
+    else begin
+        rf_sr2_rdy = ~ isdep[issue_sr2];
+        rf_sr2_val = data[issue_sr2];
+    end
 end
 
 

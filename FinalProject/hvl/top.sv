@@ -1,7 +1,7 @@
 `define SRC 0
 `define RAND 1
-// `define TESTBENCH `SRC
-`define TESTBENCH `RAND
+`define TESTBENCH `SRC
+// `define TESTBENCH `RAND
 
 import rv32i_types::*;
 
@@ -15,7 +15,7 @@ rvfi_itf rvfi(itf.clk, itf.rst);
 
 // Instantiate Testbench
 generate
-if (`TESTBENCH == `SRC) begin
+if (`TESTBENCH == `SRC) begin : source
     source_tb tb(
         .magic_mem_itf(itf),
         .mem_itf(itf),
@@ -24,7 +24,7 @@ if (`TESTBENCH == `SRC) begin
         .rvfi(rvfi)
     );
 end
-else begin
+else begin : random
     random_tb tb(
         .itf(itf), 
         .mem_itf(itf)
@@ -39,17 +39,6 @@ initial begin
 end
 /****************************** End do not touch *****************************/
 
-// Stop simulation on timeout (stall detection), halt
-// int timeout = 1000000;   // Feel Free to adjust the timeout value
-// always @(posedge itf.clk) begin
-//     if (rvfi.halt)
-//         $finish;
-//     if (timeout == 0) begin
-//         $display("TOP: Timed out");
-//         $finish;
-//     end
-//     timeout <= timeout - 1;
-// end
 
 /************************ Signals necessary for monitor **********************/
 // This section not required until CP2
@@ -60,83 +49,89 @@ assign rvfi.commit = dut.i_cpu.i_rob.flag_commit_i;
 // Set high when target PC == Current PC for a branch
 assign rvfi.halt = rvfi.commit & (dut.i_cpu.i_rob.pc_i == dut.i_cpu.i_rob.pc_i_n); 
 
-/*
-    Instruction and trap:
-        rvfi.inst
-        rvfi.trap
-
-    Regfile:
-        rvfi.rs1_addr
-        rvfi.rs2_addr
-        rvfi.rs1_rdata
-        rvfi.rs2_rdata
-        rvfi.load_regfile
-        rvfi.rd_addr
-        rvfi.rd_wdata
-
-    PC:
-        rvfi.pc_rdata
-        rvfi.pc_wdata
-
-    Memory:
-        rvfi.mem_addr
-        rvfi.mem_rmask
-        rvfi.mem_wmask
-        rvfi.mem_rdata
-        rvfi.mem_wdata
-
-    Please refer to rvfi_itf.sv for more information.
-*/
+// Instruction buffers
 logic [$clog2(SIZE_ROB)-1:0] p_start, p_end;
 logic [SIZE_ROB-1:0][31:0] buf_inst;
 logic [SIZE_ROB-1:0][4:0] buf_rs1_addr, buf_rs2_addr;
+logic [SIZE_ROB-1:0] buf_trap;
+
+// Memory buffers
+logic buf_ren;
+logic buf_wen;
+logic [31:0] buf_addr;
+logic [3:0] buf_mask;
+logic [31:0] buf_rdata;
+logic [31:0] buf_wdata;
 
 initial begin
     p_start <= {$clog2(SIZE_ROB){1'b0}};
     p_end <= {$clog2(SIZE_ROB){1'b0}};
+    buf_ren <= 1'b0;
+    buf_wen <= 1'b0;
 end
 
-// Buffer data until instruction commits
-always @(posedge itf.clk iff dut.i_cpu.issue_req) begin
-    p_end <= p_end + 1;
-    buf_inst[p_end] <= dut.i_cpu.iq_inst;
-    buf_rs1_addr[p_end] <= dut.i_cpu.issue_sr1;
-    buf_rs2_addr[p_end] <= dut.i_cpu.issue_sr2;
+// Buffer data at issue stage
+always @(posedge itf.clk) begin
+    if (dut.i_cpu.i_rob.flag_flush_i)
+        p_end <= dut.i_cpu.i_rob.br_id + 1;
+    else
+        if (dut.i_cpu.issue_req) begin
+            p_end <= p_end + 1;
+            buf_trap[p_end] <= dut.i_cpu.i_issuer.trap;
+            buf_inst[p_end] <= dut.i_cpu.iq_inst;
+            buf_rs1_addr[p_end] <= dut.i_cpu.issue_sr1;
+            buf_rs2_addr[p_end] <= dut.i_cpu.issue_sr2;
+        end
+end
+
+// Buffer data at memory access stage
+always @(posedge itf.clk iff dut.i_cpu.i_lsq.data_mem_resp) begin
+    buf_ren <= dut.i_cpu.i_lsq.data_read;
+    buf_wen <= dut.i_cpu.i_lsq.data_write;
+    buf_addr <= dut.i_cpu.i_lsq.data_mem_address;
+    buf_mask <= dut.i_cpu.i_lsq.data_mbe;
+    buf_rdata <= dut.i_cpu.i_lsq.data_mem_rdata;
+    buf_wdata <= dut.i_cpu.i_lsq.data_mem_wdata;
+    @(posedge itf.clk iff rvfi.commit);
+    buf_ren <= 1'b0;
+    buf_wen <= 1'b0;
 end
 
 // Pop out data after instruction commits
 initial rvfi.order = 0;
 always @(posedge itf.clk iff rvfi.commit) begin
     p_start <= p_start + 1;
-    rvfi.order <= rvfi.order + 1; // Modify for OoO (?)
+    rvfi.order <= rvfi.order + 1;
+    if (rvfi.order % 2000 == 0)
+        $display("sample commit #%6d: %8h", rvfi.order, rvfi.inst);
 end
 
-riscv_formal_monitor_rv32imc monitor(
-    .clock(itf.clk),
-    .reset(itf.rst),
-    .rvfi_valid(rvfi.commit),
-    .rvfi_order(rvfi.order),
-    .rvfi_insn(buf_inst[p_start]),
-    .rvfi_trap(dut.i_cpu.i_issuer.trap),
-    .rvfi_halt(rvfi.halt),
-    .rvfi_intr(1'b0),
-    .rvfi_mode(2'b00),
-    .rvfi_rs1_addr(buf_rs1_addr[p_start]),
-    .rvfi_rs2_addr(buf_rs2_addr[p_start]),
-    .rvfi_rs1_rdata(dut.i_cpu.i_regfile.data[buf_rs1_addr[p_start]]),
-    .rvfi_rs2_rdata(dut.i_cpu.i_regfile.data[buf_rs2_addr[p_start]]),
-    .rvfi_rd_addr(dut.i_cpu.commit_rf_en ? dut.i_cpu.commit_rd : 5'b0),
-    .rvfi_rd_wdata(monitor.rvfi_rd_addr ? dut.i_cpu.commit_data : 32'b0),
-    .rvfi_pc_rdata(dut.i_cpu.i_rob.pc_i),
-    .rvfi_pc_wdata(dut.i_cpu.i_rob.pc_i_n),
-    .rvfi_mem_addr(32'b0),
-    .rvfi_mem_rmask(4'b0),
-    .rvfi_mem_wmask(4'b0),
-    .rvfi_mem_rdata(32'b0),
-    .rvfi_mem_wdata(32'b0),
-    .rvfi_mem_extamo(1'b0),
-    .errcode(rvfi.errcode)
-);
+// Assign signals
+always_comb begin
+    // rvfi.commit
+    // rvfi.order
+    rvfi.inst = buf_inst[p_start];
+    rvfi.trap = buf_trap[p_start];
+    // rvfi.halt
+    // 1'b0
+    // 2'b00
+    rvfi.rs1_addr = buf_rs1_addr[p_start];
+    rvfi.rs2_addr = buf_rs2_addr[p_start];
+    rvfi.rs1_rdata = dut.i_cpu.i_regfile.data[buf_rs1_addr[p_start]];
+    rvfi.rs2_rdata = dut.i_cpu.i_regfile.data[buf_rs2_addr[p_start]];
+    rvfi.load_regfile = dut.i_cpu.commit_rf_en;
+    rvfi.rd_addr = dut.i_cpu.commit_rd;
+    rvfi.rd_wdata = dut.i_cpu.commit_rd ? dut.i_cpu.commit_data : 0;
+    rvfi.pc_rdata = dut.i_cpu.i_rob.pc_i;
+    rvfi.pc_wdata = dut.i_cpu.i_rob.pc_i_n;
+    rvfi.mem_addr = (buf_wen || buf_ren) ? buf_addr : 32'b0;
+    rvfi.mem_rmask = buf_ren ? buf_mask : 4'b0;
+    rvfi.mem_wmask = buf_wen ? buf_mask : 4'b0;
+    rvfi.mem_rdata = buf_ren ? buf_rdata : 32'b0;
+    rvfi.mem_wdata = buf_wen ? buf_wdata : 32'b0;
+    // 1'b0
+    // rvfi.errcode
+end
 
 /**************************** End RVFIMON signals ****************************/
 

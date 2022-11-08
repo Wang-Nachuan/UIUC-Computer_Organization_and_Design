@@ -1,13 +1,13 @@
-test_br_unsigned.s:
+cpu_inst_br_unsign.s:
 .align 4
 .section .text
 .globl _start
 
     # True if x3 is always incremented by 1
-
-    lw x1, opcode_usigned_1     # 0x00000010
-    lw x2, opcode_usigned_2     # 0xffffff20
-    andi x3, x3, 0
+    
+    li x1, 8
+    li x2, -8
+    and x3, x3, x0
 
     # beq
     beq x1, x2, beq_true_0
@@ -86,8 +86,3 @@ bgeu_true_7:
 
 deadloop:
     beq x0, x0, deadloop
-
-.section .rodata
-
-opcode_usigned_1:   .word 0x00000010
-opcode_usigned_2:   .word 0xffffff20

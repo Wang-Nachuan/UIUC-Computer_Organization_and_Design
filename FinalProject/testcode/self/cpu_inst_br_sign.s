@@ -1,14 +1,14 @@
-cpu_inst_br_unsigned.s:
+cpu_inst_br_sign.s:
 .align 4
 .section .text
 .globl _start
 
     # True if x5 is always incremented by 1
 
-    lw x1, opcode_signed_1  # 0x00000010
-    lw x2, opcode_signed_2  # 0x00000020
-    lw x3, opcode_signed_3  # 0xffffff10 
-    lw x4, opcode_signed_4  # 0xffffff20
+    li x1, 0x00000010
+    li x2, 0x00000020
+    li x3, 0xffffff10 
+    li x4, 0xffffff20
     andi x5, x5, 0
 
     # blt
@@ -86,13 +86,3 @@ bge_true_7:
 
 deadloop:
     beq x0, x0, deadloop
-
-.section .rodata
-
-opcode_signed_1:    .word 0x00000010
-opcode_signed_2:    .word 0x00000020
-opcode_signed_3:    .word 0xffffff10
-opcode_signed_4:    .word 0xffffff20
-
-flage_succ:         .word 0x000000aa
-flage_fail:         .word 0x000000ff

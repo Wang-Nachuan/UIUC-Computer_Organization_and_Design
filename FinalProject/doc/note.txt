@@ -9,24 +9,81 @@ ROB:
     *** flush时regfile里的dependence要么改变要么置零
 
 Load/store queue:
-    注意commit_ls_en的持续时间
+    ***LSQ assumes that the resp signal only takes one cycle***
+    ***If voilated, somethinge wierd is likely to happen***
 
-Regfile:
-    see wheter two-if is valid
+为什么2267a023 issue时rob_sr2_rdy会变0?
 
-RS:
-    auipc读的值是instruction queue里的pc-4
-    连续if的写法？
-    不需要的oprand的rdy信号一开始就是1
-    默认opr1存sr1
-    exe_finish必须在写入cdb的同一个cycle置1
+Bug trace
 
-ALU:
-    ALU should also be flushed
-    exe_finish的时序?
+    mp4-cp3.s:
+
+    1. "2267a023: sw x6, FUN, x15" wrong addr
+    -> x15 value incorrect, expect 0x44c but 0x7b4
+    -> inst issued at 3845000
+        - x15 dep_id = 0
+        - rob_sr1_rdy = 1 (which might be wrong)
+    -> Who lastly set x15? "00000797: auipc x15, 0x0" (id=0)
+    -> Value 0x44c written to CDB in next cycle
+    -> But 0x7b4 is written to CDB one cycle before it. Who wrote 0x7b4?
+    -> ALU wrote 0x7b4 to id=0, corresponding instruction is "417: auipc x8,0x0" (id=0)
+    -> But "417: auipc x8,0x0" should be flushed
+    -> Since "417: auipc x8,0x0" is not stored in rob's register, the flush signal does not include it
+
+    2. "0000c463: bgt x0, x1, T3", t=6085000, id=7, pc_wdata incorrect
+    -> Inst issued at 5985000, x1 dep_id = 6
+    -> Inst #6 written at 6070000
+    -> opcode is set to 0
+
+    3. "00229293: slli x5, x5, 0x2", t=200315000, id=2, rd_wdata incorrect (expect 0x80, write 0x20)
+    -> Inst issued at 200255000, x5 dep_id = 1, in RS1[2]
+    -> Imm value (opr2) is set to 20 at flush (t=200275000)
+        - Someone write to #1
+    
+    4. "00221213: slli x4, x4, 0x2", t=650595000, id=7
+        - rd_addr: expect 0x4 but 0x3
+        - rd_wdata: expect 0x4a368 but 0x127e5
+        - mem_addr: expect 0x11a0 but 0x0
+    -> Inst issued at t=650465000, x4 dep_id = 1, in RS1[2]
+
+    comp2_i.s:
+
+    1. "00112623: sw x1, 12(x2)", t=690835000, id=7
+        - pc_wdata: expect 0x2c0 but 0x348
+        - mem_wmask: expect 0xf but 0x0
+        - mem_addr: expect 0x83fffd2c but 0x0
+        - mem_wdata: expect 0x354 but 0x0
+    -> Inst issued at t=690765000, x2 dep_id=6, x1=0x354, in LSQ[1]
+    -> CDB write val=0x83fffd20 to x2
+        - Why commit_lsq_en last for two cycles?
+            - Who set the isfinish of inst #7? CDB
+                - Who write to the CDB? "fe9418e3: bne x8, x9, 1033c", which should be flushed
+
+    comp3.s:
+
+    1. "01851513: slli x10 ,x10 ,0x18", t=795000, id=5, cannot commit
+    -> Inst issued at t=695000, x10 dep_id=4, in RS1[0]
+
+    2. "00b6e863: bltu x13, x11, 0x1027c", t=2185000, id=3, cannot commit
+    -> Inst issued at t=2115000, x13 dep_id=2, x11=0x5eb19, in RS2[0]
+
 
 make sim/simv
-make run ASM=./testcode/self/cpu_reg.s
 ./run_verdi.sh &
 make synth
 make synth-gui
+
+make run ASM=./testcode/self/cpu_reg.s
+make run ASM=./testcode/self/cpu_inst_br_unsign.s
+make run ASM=./testcode/self/cpu_inst_br_sign.s
+make run ASM=./testcode/self/cpu_inst_ls.s
+make run ASM=./testcode/self/cpu_inst_jp.s
+make run ASM=./testcode/self/cpu_inst_u.s
+
+make run ASM=./testcode/mp4-cp1.s
+make run ASM=./testcode/mp4-cp2.s
+make run ASM=./testcode/mp4-cp3.s
+
+make run ASM=./testcode/comp1.s
+make run ASM=./testcode/comp2_i.s
+make run ASM=./testcode/comp3.s

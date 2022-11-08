@@ -7,7 +7,7 @@
 
 // Set these to 1 to enable the feature for CP2
 `define USE_SHADOW_MEMORY 0
-`define USE_RVFI_MONITOR 0
+`define USE_RVFI_MONITOR 1
 
 `include "tb_itf.sv"
 
@@ -28,11 +28,12 @@ initial begin
 end
 
 /**************************** Halting Conditions *****************************/
-int timeout = 100000000;
-
+int timeout = 1000000000;
 always @(posedge tb_itf.clk) begin
-    if (rvfi.halt)
+    if (rvfi.halt) begin
+        $display("TOP: Program halt properly");
         $finish;
+    end
     if (timeout == 0) begin
         $display("TOP: Timed out");
         $finish;
@@ -61,11 +62,11 @@ generate
 endgenerate
 
 generate
-    if (`USE_SHADOW_MEMORY) begin
+    if (`USE_SHADOW_MEMORY) begin : memory_shadow
         shadow_memory sm(sm_itf);
     end
 
-    if (`USE_RVFI_MONITOR) begin
+    if (`USE_RVFI_MONITOR) begin : monitor
         /* Instantiate RVFI Monitor */
         riscv_formal_monitor_rv32imc monitor(
             .clock(rvfi.clk),
@@ -81,7 +82,7 @@ generate
             .rvfi_rs2_addr(rvfi.rs2_addr),
             .rvfi_rs1_rdata(rvfi.rs1_addr ? rvfi.rs1_rdata : 0),
             .rvfi_rs2_rdata(rvfi.rs2_addr ? rvfi.rs2_rdata : 0),
-            .rvfi_rd_addr(rvfi.load_regfile ? rvfi.rd_addr : 0),
+            .rvfi_rd_addr(rvfi.load_regfile ? rvfi.rd_addr : 5'b0),
             .rvfi_rd_wdata(rvfi.load_regfile ? rvfi.rd_wdata : 0),
             .rvfi_pc_rdata(rvfi.pc_rdata),
             .rvfi_pc_wdata(rvfi.pc_wdata),

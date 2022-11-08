@@ -15,13 +15,13 @@ typedef logic [3:0] rv32i_mem_wmask;
 parameter SIZE_INSTQ = 8;       // Instruction queue size
 parameter SIZE_RS_ALU = 4;      // Reservation station size (for ALU)
 parameter SIZE_RS_BR = 2;       // Reservation station size (for branch)
-parameter SIZE_RS_LS = 2;       // Reservation station size (for load/store)
-parameter SIZE_ROB = SIZE_RS_ALU + SIZE_RS_BR + SIZE_RS_LS;     // Reorder buffer size
+parameter SIZE_RS_LSQ = 2;      // Reservation station size (for load/store)
+parameter SIZE_ROB = SIZE_RS_ALU + SIZE_RS_BR + SIZE_RS_LSQ;     // Reorder buffer size
 
 parameter LEN_ID = $clog2(SIZE_ROB);    // Length of identifer
 parameter LEN_OPC_ALU = 4;      // Length of opcode for ALU
 parameter LEN_OPC_BR = 3;       // Length of opcode for branch
-parameter LEN_OPC_LS = 3;       // Length of opcode for load/store
+parameter LEN_OPC_LSQ = 3;      // Length of opcode for load/store
 
 // Type of instruction
 typedef enum bit [1:0] {

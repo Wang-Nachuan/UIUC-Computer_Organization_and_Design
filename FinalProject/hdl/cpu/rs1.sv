@@ -1,4 +1,4 @@
-module rs
+module rs1
 import rv32i_types::*;
 #(
     parameter size = 4,
@@ -10,29 +10,29 @@ import rv32i_types::*;
     input logic rst,
 
     // Issue
-    input logic issue_en,
-    input logic [len_opc-1:0] issue_opc,
-    output logic rs_isfull,
+    input logic issue_en_rs1,
+    input logic [len_opc-1:0] issue_opc_rs1,
+    output logic rs1_isfull,
 
     // ROB/Regfile
-    input logic [len_id-1:0] rs_id_in,
+    input logic [len_id-1:0] rob_id,
     // sr1
-    input logic rs_opr1_rdy,
-    input logic [len_id-1:0] rs_opr1_id,
-    input logic [31:0] rs_opr1_val,
+    input logic rs1_opr1_rdy,
+    input logic [len_id-1:0] rs1_opr1_id,
+    input logic [31:0] rs1_opr1_val,
     // sr2/imm/none
-    input logic rs_opr2_rdy,
-    input logic [len_id-1:0] rs_opr2_id,
-    input logic [31:0] rs_opr2_val,
+    input logic rs1_opr2_rdy,
+    input logic [len_id-1:0] rs1_opr2_id,
+    input logic [31:0] rs1_opr2_val,
 
     // Execution unit
-    input logic exe_resp,               // 1-Line pointed by cursor_exe_i is executed
-    input logic exe_finish,             // 1-Result has been written to the bus
-    output logic rs_exe_req,            // 1-A line is ready to be executed
-    output logic [len_id-1:0] rs_id,
-    output logic [len_opc-1:0] rs_opc,
-    output logic [31:0] rs_opr1,
-    output logic [31:0] rs_opr2,
+    input logic alu_resp,               // 1-Line pointed by cursor_exe_i is executed
+    input logic alu_finish,             // 1-Result has been written to the bus
+    output logic rs1_exe_req,            // 1-A line is ready to be executed
+    output logic [len_id-1:0] rs1_id,
+    output logic [len_opc-1:0] rs1_opc,
+    output logic [31:0] rs1_opr1,
+    output logic [31:0] rs1_opr2,
 
     // CDB
     input cdb_data cdb_data_out,
@@ -56,7 +56,6 @@ logic [size-1:0][31:0] opr2_val, opr2_val_n;
 // Others Signals
 logic [$clog2(size)-1:0] cursor_issue_i;              // Point to next available line
 logic [$clog2(size)-1:0] cursor_exe_i;                // Point to next line to execute
-logic cursor_issue_valid_i;         // 1-cursor_issue_i is valid
 logic cursor_exe_valid_i;           // 1-cursor_exe_i is valid
 
 // Updata internal state (ff)
@@ -85,7 +84,7 @@ always_comb begin
     valid_n = valid;
     exe_n = exe;
     id_n = id;
-    opc_n = opc_n;
+    opc_n = opc;
     opr1_rdy_n = opr1_rdy;
     opr1_id_n = opr1_id;
     opr1_val_n = opr1_val;
@@ -96,44 +95,44 @@ always_comb begin
     for (int i=0; i<size; i++) begin
         /* Order of if-statements is important */
         // Start Executing
-        if (exe_resp && cursor_exe_valid_i && (i[$clog2(size)-1:0] == cursor_exe_i)) begin
+        if (alu_resp && cursor_exe_valid_i && (i[$clog2(size)-1:0] == cursor_exe_i)) begin
             exe_n[i] = 1'b1;
             // Finish at same cycle
-            if (exe_finish)
+            if (alu_finish)
                 valid_n[i] = 1'b0;
         end
 
         // Finish Executing (aka result has been written to the bus)
-        if (valid[i] && exe_finish && exe[i]) begin
+        if (valid[i] && alu_finish && exe[i]) begin
             valid_n[i] = 1'b0;
         end
 
         // Issue
-        if (issue_en && (i[$clog2(size)-1:0] == cursor_issue_i)) begin
+        if (issue_en_rs1 && (i[$clog2(size)-1:0] == cursor_issue_i)) begin
             valid_n[i] = 1'b1;
             exe_n[i] = 1'b0;
-            id_n[i] = rs_id_in;
-            opc_n[i] = issue_opc;
+            id_n[i] = rob_id;
+            opc_n[i] = issue_opc_rs1;
             // sr1
-            opr1_rdy_n[i] = rs_opr1_rdy;
-            opr1_id_n[i] = rs_opr1_id;
-            opr1_val_n[i] = rs_opr1_val;
+            opr1_rdy_n[i] = rs1_opr1_rdy;
+            opr1_id_n[i] = rs1_opr1_id;
+            opr1_val_n[i] = rs1_opr1_val;
             // sr2/imm/none
-            opr2_rdy_n[i] = rs_opr2_rdy;
-            opr2_id_n[i] = rs_opr2_id;
-            opr2_val_n[i] = rs_opr2_val;
+            opr2_rdy_n[i] = rs1_opr2_rdy;
+            opr2_id_n[i] = rs1_opr2_id;
+            opr2_val_n[i] = rs1_opr2_val;
         end
 
         // Write
         if (cdb_data_out.valid) begin
-            if ((valid[i] && opr1_id[i] == cdb_data_out.id && ~opr1_rdy)
-                || (issue_en && rs_opr1_id == cdb_data_out.id && ~rs_opr1_rdy)) begin
+            if ((valid[i] && opr1_id[i] == cdb_data_out.id && ~opr1_rdy[i])
+                || (issue_en_rs1 && i[$clog2(size)-1:0] == cursor_issue_i && rs1_opr1_id == cdb_data_out.id && ~rs1_opr1_rdy)) begin
                 opr1_rdy_n[i] = 1'b1;
                 opr1_val_n[i] = cdb_data_out.data;
             end
 
-            if ((valid[i] && opr2_id[i] == cdb_data_out.id && ~opr2_rdy)
-                || (issue_en && rs_opr2_id == cdb_data_out.id && ~rs_opr2_rdy)) begin
+            if ((valid[i] && opr2_id[i] == cdb_data_out.id && ~opr2_rdy[i])
+                || (issue_en_rs1 && i[$clog2(size)-1:0] == cursor_issue_i  && rs1_opr2_id == cdb_data_out.id && ~rs1_opr2_rdy)) begin
                 opr2_rdy_n[i] = 1'b1;
                 opr2_val_n[i] = cdb_data_out.data;
             end
@@ -148,19 +147,8 @@ end
 
 // Output
 always_comb begin
-    rs_isfull = (& valid) & (~ exe_finish);   // Similar logic to rob
+    rs1_isfull = (& valid) & (~ alu_finish);   // Similar logic to rob
 
-    // Find a line to issue instruction
-    cursor_issue_i = {$clog2(size){1'b0}};
-    cursor_issue_valid_i = 1'b0;
-    for (int i=0; i<size; i++) begin
-        if (~ valid[i]) begin       // Include line that is just finished?
-            cursor_issue_i = i[$clog2(size)-1:0];
-            cursor_issue_valid_i = 1'b1;
-            break;
-        end
-    end
-    
     // Find a line to execute
     cursor_exe_i = {$clog2(size){1'b0}};
     cursor_exe_valid_i = 1'b0;
@@ -172,13 +160,22 @@ always_comb begin
         end
     end
 
+    // Find a line to issue instruction
+    cursor_issue_i = cursor_exe_i;
+    for (int i=0; i<size; i++) begin
+        if (~ valid[i]) begin       // Include line that is just finished?
+            cursor_issue_i = i[$clog2(size)-1:0];
+            break;
+        end
+    end
+
     // Execute the line
-    rs_exe_req = cursor_exe_valid_i;
-    rs_id = id[cursor_exe_i];
-    rs_opc = opc[cursor_exe_i];
-    rs_opr1 = opr1_val[cursor_exe_i];
-    rs_opr2 = opr2_val[cursor_exe_i];
+    rs1_exe_req = cursor_exe_valid_i;
+    rs1_id = id[cursor_exe_i];
+    rs1_opc = opc[cursor_exe_i];
+    rs1_opr1 = opr1_val[cursor_exe_i];
+    rs1_opr2 = opr2_val[cursor_exe_i];
 end
 
 
-endmodule : rs
+endmodule : rs1

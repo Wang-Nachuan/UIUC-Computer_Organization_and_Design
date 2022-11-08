@@ -31,14 +31,14 @@ import rv32i_types::*;
         .inst_mem_resp(instr_mem_resp),
         .inst_mem_rdata(instr_mem_rdata),
         .inst_read(instr_read),
-        .inst_mem_address(instr_mem_address)
-        // .data_mem_resp(data_mem_resp),
-        // .data_mem_rdata(data_mem_rdata), 
-        // .data_read(data_read),
-        // .data_write(data_write),
-        // .data_mbe(data_mbe),
-        // .data_mem_address(data_mem_address),
-        // .data_mem_wdata(data_mem_wdata)
+        .inst_mem_address(instr_mem_address),
+        .data_mem_resp(data_mem_resp),
+        .data_mem_rdata(data_mem_rdata), 
+        .data_read(data_read),
+        .data_write(data_write),
+        .data_mbe(data_mbe),
+        .data_mem_address(data_mem_address),
+        .data_mem_wdata(data_mem_wdata)
     );
 
 

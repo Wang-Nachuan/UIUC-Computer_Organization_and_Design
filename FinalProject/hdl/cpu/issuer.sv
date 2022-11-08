@@ -37,14 +37,15 @@ import rv32i_types::*;
     output logic [2:0] issue_rs2_opr3_sel,
     output br_opc issue_opc_rs2,
 
-    input logic rs3_isfull,
-    output logic issue_en_rs3,
-    output logic [2:0] issue_rs3_opr1_sel,
-    output logic [2:0] issue_rs3_opr2_sel,
-    output logic [2:0] issue_rs3_opr3_sel,
-    output ls_opc issue_opc_rs3,
+    input logic lsq_isfull,
+    output logic issue_en_lsq,
+    output logic [2:0] issue_lsq_opr1_sel,
+    output logic [2:0] issue_lsq_opr2_sel,
+    output logic [2:0] issue_lsq_opr3_sel,
+    output ls_opc issue_opc_lsq,
 
-    //
+    // Flush
+    input logic flush,
 
     // to and from ROB 
     // output logic issue_req, //set high when requested  to ROB, regfile, reservation station
@@ -100,7 +101,7 @@ always_comb begin : read_logic
     issue_req = 1'b0;
     issue_type = itype_alu;
     trap = 1'b0;
-    if(~rob_isfull && iq_rvalid) begin
+    if(~rob_isfull && iq_rvalid && ~flush) begin
         case(opcode)
             op_imm: begin
                 case (arith_funct3)
@@ -213,30 +214,30 @@ always_comb begin : read_logic
                 endcase
             end
             op_load: begin
-                if(~rs3_isfull) begin
+                if(~lsq_isfull) begin
                     issue_isrd = 1'b1;
                     issue_req = 1'b1;
                     issue_type = itype_ls;
                 end   
                 case(load_funct3) 
-                    lb:issue_opc_rs3 = ls_lb;
-                    lh:issue_opc_rs3 = ls_lh;
-                    lw:issue_opc_rs3 = ls_lw;
-                    lbu:issue_opc_rs3 = ls_lbu;
-                    lhu:issue_opc_rs3 = ls_lhu;
+                    lb:issue_opc_lsq = ls_lb;
+                    lh:issue_opc_lsq = ls_lh;
+                    lw:issue_opc_lsq = ls_lw;
+                    lbu:issue_opc_lsq = ls_lbu;
+                    lhu:issue_opc_lsq = ls_lhu;
                     default: trap = 1'b1;
                 endcase                       
             end
             op_store: begin
-                if(~rs3_isfull) begin
+                if(~lsq_isfull) begin
                     issue_isrd = 1'b0;
                     issue_req = 1'b1;
                     issue_type = itype_ls;
                 end
                 case(store_funct3)  
-                    sb:issue_opc_rs3 = ls_sb;
-                    sh:issue_opc_rs3 = ls_sb;
-                    sw:issue_opc_rs3 = ls_sw;
+                    sb:issue_opc_lsq = ls_sb;
+                    sh:issue_opc_lsq = ls_sh;
+                    sw:issue_opc_lsq = ls_sw;
                     default: trap = 1'b1;
                 endcase
             end                   
@@ -250,17 +251,17 @@ end : read_logic
 always_comb begin : issue_logic
     issue_en_rs1 = 1'b0;
     issue_en_rs2 = 1'b0;
-    issue_en_rs3 = 1'b0;
+    issue_en_lsq = 1'b0;
     issue_rs1_opr1_sel = 3'b0;
     issue_rs1_opr2_sel = 3'b0;
     issue_rs2_opr1_sel = 3'b0;
     issue_rs2_opr2_sel = 3'b0;
     issue_rs2_opr3_sel = 3'b0;
-    issue_rs3_opr1_sel = 3'b0;
-    issue_rs3_opr2_sel = 3'b0;
-    issue_rs3_opr3_sel = 3'b0;
+    issue_lsq_opr1_sel = 3'b0;
+    issue_lsq_opr2_sel = 3'b0;
+    issue_lsq_opr3_sel = 3'b0;
 
-    if (~rob_isfull && iq_rvalid) begin
+    if (~rob_isfull && iq_rvalid && ~flush) begin
         case(opcode) 
             op_imm: begin
                 case (arith_funct3)
@@ -302,41 +303,41 @@ always_comb begin : issue_logic
             op_br: begin // not sure
                 if(~rs2_isfull) begin
                     issue_en_rs2 = 1'b1;
-                    issue_rs2_opr1_sel = rsoprmux::sr;
-                    issue_rs2_opr2_sel = rsoprmux::sr;
-                    issue_rs2_opr3_sel = rsoprmux::b_imm;
+                    issue_rs2_opr1_sel = rsoprmux::sr;  // rs1
+                    issue_rs2_opr2_sel = rsoprmux::sr;  // rs2
+                    issue_rs2_opr3_sel = rsoprmux::b_imm;   // offset
                 end
             end
             op_jal: begin
                 if(~rs2_isfull) begin
                     issue_en_rs2 = 1'b1;
                     issue_rs2_opr1_sel = rsoprmux::pc;
-                    issue_rs2_opr2_sel = rsoprmux::j_imm;
-                    issue_rs2_opr3_sel = rsoprmux::none;
+                    issue_rs2_opr2_sel = rsoprmux::none;
+                    issue_rs2_opr3_sel = rsoprmux::j_imm;
                 end
             end
             op_jalr: begin
                 if(~rs2_isfull) begin
                     issue_en_rs2 = 1'b1;
                     issue_rs2_opr1_sel = rsoprmux::sr;
-                    issue_rs2_opr2_sel = rsoprmux::i_imm;
-                    issue_rs2_opr3_sel = rsoprmux::none;
+                    issue_rs2_opr2_sel = rsoprmux::none;
+                    issue_rs2_opr3_sel = rsoprmux::i_imm;
                 end
             end
             op_load: begin
-                if(~rs3_isfull) begin
-                    issue_en_rs3 = 1'b1;
-                    issue_rs3_opr1_sel = rsoprmux::sr;
-                    issue_rs3_opr2_sel = rsoprmux::i_imm;
-                    issue_rs3_opr3_sel = rsoprmux::none;
+                if(~lsq_isfull) begin
+                    issue_en_lsq = 1'b1;
+                    issue_lsq_opr1_sel = rsoprmux::sr;  // rs1 (base)
+                    issue_lsq_opr2_sel = rsoprmux::none;
+                    issue_lsq_opr3_sel = rsoprmux::i_imm;   // offset 
                 end                    
             end
             op_store: begin // s_imm
-                if(~rs3_isfull) begin
-                    issue_en_rs3 = 1'b1;
-                    issue_rs3_opr1_sel = rsoprmux::sr;
-                    issue_rs3_opr2_sel = rsoprmux::sr;
-                    issue_rs3_opr3_sel = rsoprmux::s_imm;
+                if(~lsq_isfull) begin
+                    issue_en_lsq = 1'b1;
+                    issue_lsq_opr1_sel = rsoprmux::sr;  // rs1 (base)
+                    issue_lsq_opr2_sel = rsoprmux::sr;  // rs2 (src)
+                    issue_lsq_opr3_sel = rsoprmux::s_imm;   // offset
                 end  
             end
             default: ;
