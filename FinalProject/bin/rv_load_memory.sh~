@@ -1,9 +1,8 @@
 #!/bin/bash
 
 # Settings
-# ECE411DIR=$HOME/tem/mp4
-# DEFAULT_TARGET=$ECE411DIR/sim/memory.lst
-ECE411DIR=$HOME/Course/ECE411_FinalProject
+
+ECE411DIR=$HOME/lll
 DEFAULT_TARGET=$ECE411DIR/sim/memory.lst
 # ECE411DIR=$HOME/Desktop/fa22_ece411_zz44
 # DEFAULT_TARGET=$ECE411DIR/mp4/sim/memory.lst

@@ -1,5 +1,7 @@
 module issuer
-import rv32i_types::*;      
+import rv32i_types::*;    
+#(  parameter size_br_his = SIZE_GLOBAL
+)  
 (          
     // to and from inst queue
     output logic issue_req,   //combinational, logic issue_req
@@ -7,6 +9,7 @@ import rv32i_types::*;
     input rv32i_word iq_pc,
     input rv32i_word iq_pc_next,
     input logic iq_rvalid, //
+    input logic [size_br_his-1:0] iq_br_history,
     // input logic is_empty_q,
 
     // to and from RS1, regfile connected to CPU, only need sel signal 
@@ -46,6 +49,7 @@ import rv32i_types::*;
 
     // Flush
     input logic flush,
+    output logic [size_br_his-1:0] issue_br_history,
 
     // to and from ROB 
     // output logic issue_req, //set high when requested  to ROB, regfile, reservation station
@@ -70,7 +74,7 @@ load_funct3_t   load_funct3;
 arith_funct3_t  arith_funct3;
 
 logic trap;     // For RVFI monitor only
-
+assign issue_br_history = iq_br_history;
 assign issue_pc = iq_pc;
 assign issue_pcnext = iq_pc_next;
 assign funct3 = iq_inst[14:12];

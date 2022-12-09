@@ -12,11 +12,39 @@ typedef logic [3:0] rv32i_mem_wmask;
 /*-------------------- OoO design --------------------*/ 
 
 // Constant
+parameter use_l2 = 1;
+
 parameter SIZE_INSTQ = 8;       // Instruction queue size
+
+/*----------------- Branch Predictor -----------------*/ 
+// Max accuracy
+// Accuracy for non-pipeline version: 0.889646 0.890148 0.854677
+// parameter SIZE_GLOBAL_HIS = 8;  // BHT, gshare
+// parameter SIZE_BH_TABLE = 7;    // PHT
+
+// Accuracy: 0.842705 0.795163 0.832030
+// parameter SIZE_GLOBAL_HIS = 8;  // BHT
+// parameter SIZE_BH_TABLE = 7;    // PHT
+// parameter SIZE_GSHARE_TABLE = 8; // gshare table
+
+// Accuracy: 0.754605 0.806227 0.817875
+parameter SIZE_GLOBAL_HIS = 7;  // BHT
+parameter SIZE_BH_TABLE = 5;    // PHT
+parameter SIZE_GSHARE_TABLE = 7; // gshare table
+
+parameter SIZE_GLOBAL = SIZE_GLOBAL_HIS + 2;  // LEN global_PACKAGE
+parameter DEPTH_BH_TABLE = 2 ** SIZE_GLOBAL_HIS;
+parameter DEPTH_PH_TABLE = 2 ** SIZE_BH_TABLE;
+parameter DEPTH_PH_TABLE_GSHARE = 2 ** SIZE_GSHARE_TABLE;
+parameter LEN_INSTQ = 96 + SIZE_GLOBAL - 1;
+
+/*----------------------- CPU -----------------------*/ 
+
 parameter SIZE_RS_ALU = 4;      // Reservation station size (for ALU)
-parameter SIZE_RS_BR = 2;       // Reservation station size (for branch)
-parameter SIZE_RS_LSQ = 2;      // Reservation station size (for load/store)
-parameter SIZE_ROB = SIZE_RS_ALU + SIZE_RS_BR + SIZE_RS_LSQ;     // Reorder buffer size
+parameter SIZE_RS_BR = 4;       // Reservation station size (for branch)
+parameter SIZE_RS_LSQ = 4;      // Reservation station size (for load/store)
+parameter SIZE_ROB = 2*SIZE_RS_ALU + SIZE_RS_BR + SIZE_RS_LSQ;     // Reorder buffer size
+// parameter SIZE_ROB = SIZE_RS_ALU + SIZE_RS_BR + SIZE_RS_LSQ;     // Reorder buffer size
 
 parameter LEN_ID = $clog2(SIZE_ROB);    // Length of identifer
 parameter LEN_OPC_ALU = 4;      // Length of opcode for ALU

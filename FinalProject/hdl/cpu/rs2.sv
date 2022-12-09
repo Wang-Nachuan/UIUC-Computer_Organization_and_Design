@@ -16,6 +16,7 @@ import rv32i_types::*;
     // Issue
     input logic issue_en_rs2,
     input logic [len_opc-1:0] issue_opc_rs2,
+    input logic [SIZE_GLOBAL-1:0] issue_br_history,
     output logic rs2_isfull,
 
     // ROB/Regfile
@@ -43,6 +44,7 @@ import rv32i_types::*;
     output logic [31:0] rs2_opr2,
     output logic [31:0] rs2_imm,
     output logic [31:0] rs2_pc,
+    output logic [SIZE_GLOBAL-1:0] rs2_br_history,
 
     // CDB
     input cdb_data cdb_data_out,
@@ -62,9 +64,10 @@ logic [size-1:0][31:0] opr1_val, opr1_val_n;
 logic [size-1:0] opr2_rdy, opr2_rdy_n;
 logic [size-1:0][len_id-1:0] opr2_id, opr2_id_n;
 logic [size-1:0][31:0] opr2_val, opr2_val_n;
-// Imm, PC
+// Imm, PC, br history
 logic [size-1:0][31:0] imm_val, imm_val_n;
 logic [size-1:0][31:0] pc_val, pc_val_n;
+logic [size-1:0][SIZE_GLOBAL-1:0] br_hist, br_hist_n;
 
 // Others Signals
 logic [$clog2(size)-1:0] cursor_issue_i;              // Point to next available line
@@ -91,6 +94,7 @@ always_ff @(posedge clk) begin
     opr2_val <= opr2_val_n;
     imm_val <= imm_val_n;
     pc_val <= pc_val_n;
+    br_hist <= br_hist_n;
 end
 
 // Updata internal state (comb)
@@ -108,6 +112,7 @@ always_comb begin
     opr2_val_n = opr2_val;
     imm_val_n = imm_val;
     pc_val_n = pc_val;
+    br_hist_n = br_hist;
 
     for (int i=0; i<size; i++) begin
         /* Order of if-statements is important */
@@ -141,7 +146,7 @@ always_comb begin
             // opr3
             imm_val_n[i] = rs2_imm_val;
             pc_val_n[i] = rs2_pc_val;
-
+            br_hist_n[i] = issue_br_history;
         end
 
         // Write
@@ -198,6 +203,7 @@ always_comb begin
     rs2_opr2 = opr2_val[cursor_exe_i];
     rs2_imm = imm_val[cursor_exe_i];
     rs2_pc = pc_val[cursor_exe_i];
+    rs2_br_history = br_hist[cursor_exe_i];
 end
 
 

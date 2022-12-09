@@ -1,18 +1,36 @@
-ROB:
-    在ROB满时commit，is_full应当在同一周期为0
-    ROB不处理溢出的情况，需要isuuer检查is_full信号
-    如果is_full为0且issuer要issue，则数据要在本cycle输入而不是下个cycle
-    
-    branch的valid是在cmp获得cdb控制权时再为1(需要最高优先权)
-    store在完成后会写一个空值到ROB里
-    *** flush的同时应当可以commit regfile和写入rob!!!
-    *** flush时regfile里的dependence要么改变要么置零
+Git log:
 
-Load/store queue:
-    ***LSQ assumes that the resp signal only takes one cycle***
-    ***If voilated, somethinge wierd is likely to happen***
+    Baseline:
+        963ccd77caf361c9e79e1e81a27352b3d6cc15d5
+    Branch predictor:
+        7c76ca191e8be8ab436191fa2c4e6fe899dd3135
+    Branch predictor & cache:
+        70408b137adb52a41e76e5bd88801f7436fa657d
+    Branch predictor & pipelined cache: 
 
-为什么2267a023 issue时rob_sr2_rdy会变0?
+
+
+make sim/simv
+./run_verdi.sh &
+make synth
+make synth-gui
+
+make run ASM=./testcode/self/cpu_reg.s
+make run ASM=./testcode/self/cpu_inst_br_unsign.s
+make run ASM=./testcode/self/cpu_inst_br_sign.s
+make run ASM=./testcode/self/cpu_inst_ls.s
+make run ASM=./testcode/self/cpu_inst_jp.s
+make run ASM=./testcode/self/cpu_inst_u.s
+make run ASM=./testcode/self/cache_writemiss_dirtyevict.s
+make run ASM=./testcode/self/cache_maskls.s
+
+make run ASM=./testcode/mp4-cp1.s
+make run ASM=./testcode/mp4-cp2.s
+make run ASM=./testcode/mp4-cp3.s
+
+make run ASM=./testcode/comp1.s
+make run ASM=./testcode/comp2_i.s
+make run ASM=./testcode/comp3.s
 
 Bug trace
 
@@ -67,23 +85,64 @@ Bug trace
     2. "00b6e863: bltu x13, x11, 0x1027c", t=2185000, id=3, cannot commit
     -> Inst issued at t=2115000, x13 dep_id=2, x11=0x5eb19, in RS2[0]
 
+Global/PHT
+7, 7: _  0.766809 _
+6, 7: _ 0.751981 _ 
 
-make sim/simv
-./run_verdi.sh &
-make synth
-make synth-gui
+9, 6: _ 0.765802 _
+9, 7: _ 0.766215 _ 
 
-make run ASM=./testcode/self/cpu_reg.s
-make run ASM=./testcode/self/cpu_inst_br_unsign.s
-make run ASM=./testcode/self/cpu_inst_br_sign.s
-make run ASM=./testcode/self/cpu_inst_ls.s
-make run ASM=./testcode/self/cpu_inst_jp.s
-make run ASM=./testcode/self/cpu_inst_u.s
+8, 3: 0.754605 0.806227 0.817875
+8, 5: 0.789551 0.813979 0.839620
+8, 6: 0.838807 0.794704 0.833390
+8, 7: 0.842705 0.795155 0.833390
 
-make run ASM=./testcode/mp4-cp1.s
-make run ASM=./testcode/mp4-cp2.s
-make run ASM=./testcode/mp4-cp3.s
+InstQ 4, RS 4+2+2:    0.754605 0.806190 | 724635000 3793015000 (sm error)| ?
 
-make run ASM=./testcode/comp1.s
-make run ASM=./testcode/comp2_i.s
-make run ASM=./testcode/comp3.s
+L2 cache:
+InstQ 8, RS 4+2+2:    0.754605 0.806152 0.814009 | 724355000 3745875000 3496625000 | ?
+3745875000
+sw(l1d)/sw(l2)
+44/42: 1757505000
+34/42: 1794495000
+34/44: 2435805000
+34/52: 1735515000
+
+InstQ 8, RS 4+2+2:    0.754605 0.806152 0.814009 | 723635000 3793445000 3695145000 | 2.74
+InstQ 8, RS 2+4+2:    0.744330 0.790869 0.814009 | 723695000 4045155000 3745275000 | ?
+InstQ 8, RS 2+2+4:    0.744330 0.790869 0.814009 | 723695000 4045155000 3745275000 | ?
+InstQ 8, RS 2*2+2+2:  0.754605 0.806152 0.806778 | 723725000 3796675000 3691035000 (sm error) | ?
+
+InstQ 16, RS 8+4+4:   0.743309 0.781427 0.821070 | 724475000 4023335000 3428545000 | 2.74
+InstQ 16, RS 2*4+4+4: 0.740671 0.783955 0.813361 | 724475000 4042955000 3605115000 | ?
+
+InstQ 16, RS 16+8+8:  0.747391 0.783443 0.819128 | 724055000 4055945000 3600575000 | ?
+
+-----------
+no l2: 3793445000
+l2 3/2: 3064085000
+l2 4/2: 1807615000
+l2 4/4: 2454965000
+l2 4/8: 2454965000
+-----------
+l1d 3/2: 3789525000; 4/2: 3773405000
+l1d 3/4: 3805595000; 4/4: 3773405000
+l1d 3/8: 3805595000
+
+comp2_i.s
+l2 3/2: 3064065000
+l2 4/2: 1807625000
+l2 4/4: 2454895000
+l2 4/8: 2454895000
+
+l1 3/2, l2 4/2: 705505000 1807625000 1326315000
+
+
+716525000 1735075000 1057055000
+
+Final 1
+714855000 1757455000 1057395000 5.06e+06
+
+Final 2
+714855000 1811035000 1268965000
+

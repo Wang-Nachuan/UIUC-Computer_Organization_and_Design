@@ -2,7 +2,7 @@ Magic 271485
 Revision Verdi_R-2020.12-SP1-1
 
 ; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
-viewPort 0 25 2560 964 217 187
+viewPort 0 25 2560 979 217 187
 
 ; File list:
 ; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
@@ -16,18 +16,18 @@ signalSpacing 5
 
 ; windowTimeUnit is used for zoom, cursor & marker
 ; waveform viewport range
-zoom 2003456.626761 2297594.232394
-cursor 2185000.000000
+zoom 3804327424.575771 3806509805.683400
+cursor 3805590746.596458
 marker 0.000000
 
 ; user define markers
 ; userMarker time_pos marker_name color linestyle
-userMarker 2115000 M1 ID_GREEN5 long_dashed
+userMarker 667265000 M3 ID_GREEN5 long_dashed
 
 ; visible top row signal index
-top 0
+top 48
 ; marker line index
-markerPos 149
+markerPos 99
 
 ; event list
 ; addEvent event_name event_expression
@@ -44,21 +44,20 @@ COMPLEX_EVENT_END
 
 ; toolbar current search type
 ; curSTATUS search_type
-curSTATUS ByChange
+curSTATUS ByValue
 
 
 addGroup "Top"
 activeDirFile "" "/home/nachuan3/Course/ECE411_FinalProject/sim/dump.fsdb"
 addSignal -h 15 /mp4_tb/dut/i_cpu/i_fetcher/clk
+addSignal -h 15 /mp4_tb/dut/rst
 addSubGroup "RVFI Buffer" -e FALSE
 addSignal -h 15 /mp4_tb/rvfi/inst[31:0]
 addSignal -h 15 -UNSIGNED -HEX /mp4_tb/buf_addr[31:0]
 addSignal -h 15 /mp4_tb/dut/i_cpu/i_lsq/data_mem_address[31:0]
 addSignal -h 15 -holdScope data_mem_resp
-addSignal -h 15 /mp4_tb/dut/data_read
-addSignal -h 15 -holdScope data_write
 endSubGroup "RVFI Buffer"
-addGroup "ROB"
+addGroup "ROB" -e FALSE
 addSubGroup "ls" -e FALSE
 addSignal -h 15 /mp4_tb/dut/i_cpu/i_rob/commit_lsq_en
 addSignal -h 15 -holdScope commit_lsq_id[2:0]
@@ -87,10 +86,12 @@ addSignal -h 15 -holdScope flag_inrange_unflush_i[7:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope flag_inrange_flush_i[7:0]
 addSignal -h 15 -holdScope flag_flush_i
 endSubGroup "Flush"
-addGroup "Issuer"
+addGroup "Issuer" -e FALSE
 addSignal -h 15 /mp4_tb/dut/i_cpu/i_issuer/issue_req
 addSignal -h 15 /mp4_tb/dut/i_cpu/i_rob/rob_id[2:0]
 addSignal -h 15 /mp4_tb/dut/i_cpu/i_issuer/iq_inst[31:0]
+addSignal -h 15 -holdScope issue_pcnext[31:0]
+addSignal -h 15 -holdScope issue_pc[31:0]
 addSignal -h 15 -UNSIGNED -holdScope opcode[6:0]
 addSignal -h 15 -holdScope issue_isrd
 addSignal -h 15 -holdScope issue_rd[4:0]
@@ -98,7 +99,7 @@ addSignal -h 15 -UNSIGNED -HEX -holdScope issue_sr1[4:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope issue_sr2[4:0]
 addSignal -h 15 -holdScope issue_rs1_opr1_sel[2:0]
 addSignal -h 15 -holdScope issue_rs1_opr2_sel[2:0]
-addGroup "Regfile" -e FALSE
+addGroup "Regfile"
 addSignal -h 15 /mp4_tb/dut/i_cpu/i_regfile/isdep[1]
 addSignal -h 15 -holdScope id[1][2:0]
 addSignal -h 15 -holdScope data[1][31:0]
@@ -106,42 +107,6 @@ addSubGroup "dep" -e FALSE
 addSignal -h 15 -UNSIGNED -HEX /mp4_tb/dut/i_cpu/i_regfile/isdep[31:0]
 addSignal -h 15 -holdScope id[31:0]
 endSubGroup "dep"
-addSubGroup "data0-15" -e FALSE
-addSignal -h 15 -UNSIGNED -HEX /mp4_tb/dut/i_cpu/i_regfile/data[15][31:0]
-addSignal -h 15 -holdScope data[14][31:0]
-addSignal -h 15 -holdScope data[13][31:0]
-addSignal -h 15 -holdScope data[12][31:0]
-addSignal -h 15 -holdScope data[11][31:0]
-addSignal -h 15 -holdScope data[10][31:0]
-addSignal -h 15 -holdScope data[9][31:0]
-addSignal -h 15 -holdScope data[8][31:0]
-addSignal -h 15 -holdScope data[7][31:0]
-addSignal -h 15 -holdScope data[6][31:0]
-addSignal -h 15 -holdScope data[5][31:0]
-addSignal -h 15 -holdScope data[4][31:0]
-addSignal -h 15 -holdScope data[3][31:0]
-addSignal -h 15 -holdScope data[2][31:0]
-addSignal -h 15 -holdScope data[1][31:0]
-addSignal -h 15 -holdScope data[0][31:0]
-endSubGroup "data0-15"
-addSubGroup "data16-31" -e FALSE
-addSignal -h 15 -UNSIGNED -HEX /mp4_tb/dut/i_cpu/i_regfile/data[31][31:0]
-addSignal -h 15 -holdScope data[30][31:0]
-addSignal -h 15 -holdScope data[29][31:0]
-addSignal -h 15 -holdScope data[28][31:0]
-addSignal -h 15 -holdScope data[27][31:0]
-addSignal -h 15 -holdScope data[26][31:0]
-addSignal -h 15 -holdScope data[25][31:0]
-addSignal -h 15 -holdScope data[24][31:0]
-addSignal -h 15 -holdScope data[23][31:0]
-addSignal -h 15 -holdScope data[22][31:0]
-addSignal -h 15 -holdScope data[21][31:0]
-addSignal -h 15 -holdScope data[20][31:0]
-addSignal -h 15 -holdScope data[19][31:0]
-addSignal -h 15 -holdScope data[18][31:0]
-addSignal -h 15 -holdScope data[17][31:0]
-addSignal -h 15 -holdScope data[16][31:0]
-endSubGroup "data16-31"
 addSubGroup "sr1" -e FALSE
 addSignal -h 15 -UNSIGNED -HEX /mp4_tb/dut/i_cpu/i_regfile/issue_sr1[4:0]
 addSignal -h 15 -holdScope rf_sr1_rdy
@@ -158,13 +123,46 @@ addSignal -h 15 -holdScope rf_sr2_val[31:0]
 addSignal -h 15 /mp4_tb/dut/i_cpu/rob_sr2_rdy
 addSignal -h 15 -holdScope rob_sr2_val[31:0]
 endSubGroup "sr2"
+addSignal -expanded -h 15 /mp4_tb/dut/i_cpu/i_regfile/data[31:0]
+addSignal -h 15 -holdScope data[31][31:0]
+addSignal -h 15 -holdScope data[30][31:0]
+addSignal -h 15 -holdScope data[29][31:0]
+addSignal -h 15 -holdScope data[28][31:0]
+addSignal -h 15 -holdScope data[27][31:0]
+addSignal -h 15 -holdScope data[26][31:0]
+addSignal -h 15 -holdScope data[25][31:0]
+addSignal -h 15 -holdScope data[24][31:0]
+addSignal -h 15 -holdScope data[23][31:0]
+addSignal -h 15 -holdScope data[22][31:0]
+addSignal -h 15 -holdScope data[21][31:0]
+addSignal -h 15 -holdScope data[20][31:0]
+addSignal -h 15 -holdScope data[19][31:0]
+addSignal -h 15 -holdScope data[18][31:0]
+addSignal -h 15 -holdScope data[17][31:0]
+addSignal -h 15 -holdScope data[16][31:0]
+addSignal -h 15 -holdScope data[15][31:0]
+addSignal -h 15 -holdScope data[14][31:0]
+addSignal -h 15 -holdScope data[13][31:0]
+addSignal -h 15 -holdScope data[12][31:0]
+addSignal -h 15 -holdScope data[11][31:0]
+addSignal -h 15 -holdScope data[10][31:0]
+addSignal -h 15 -holdScope data[9][31:0]
+addSignal -h 15 -holdScope data[8][31:0]
+addSignal -h 15 -holdScope data[7][31:0]
+addSignal -h 15 -holdScope data[6][31:0]
+addSignal -h 15 -holdScope data[5][31:0]
+addSignal -h 15 -holdScope data[4][31:0]
+addSignal -h 15 -holdScope data[3][31:0]
+addSignal -h 15 -holdScope data[2][31:0]
+addSignal -h 15 -holdScope data[1][31:0]
+addSignal -h 15 -holdScope data[0][31:0]
 addGroup "ALU" -e FALSE
 addSignal -h 15 /mp4_tb/dut/i_cpu/i_alu/rs1_opc[3:0]
 addSignal -h 15 -holdScope rs1_opr1[31:0]
 addSignal -h 15 -holdScope rs1_opr2[31:0]
 addSignal -h 15 -holdScope alu_finish
 addSignal -h 15 -holdScope cdb_ctrl_resp_alu
-addGroup "CDB"
+addGroup "CDB" -e FALSE
 addSignal -h 15 /mp4_tb/dut/i_cpu/i_fetcher/clk
 addSignal -expanded -h 15 /mp4_tb/dut/i_cpu/i_rob/cdb_data_out
 addSignal -h 15 -holdScope cdb_data_out.valid
@@ -178,29 +176,36 @@ addGroup "LSQ" -e FALSE
 addSignal -h 15 /mp4_tb/dut/i_cpu/i_fetcher/clk
 addSignal -h 15 /mp4_tb/dut/i_cpu/i_lsq/commit_lsq_en
 addSignal -h 15 -holdScope commit_lsq_id[2:0]
-addSubGroup "State"
+addSignal -h 15 -holdScope data_write
+addSignal -h 15 -holdScope data_mem_resp
+addSignal -h 15 -UNSIGNED -HEX -holdScope valid[1:0]
+addSignal -h 15 -holdScope lsq_isfull
+addSignal -h 15 -holdScope exe_finish
+addSubGroup "State" -e FALSE
 addSignal -h 15 /mp4_tb/dut/i_cpu/i_lsq/cursor_exe[0:0]
 addSignal -h 15 -holdScope cursor_exe_valid
 addSignal -h 15 -holdScope cursor_issue_i[0:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope valid[1:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope exe[1:0]
+addSignal -expanded -h 15 -UNSIGNED -HEX -holdScope valid[1:0]
+addSignal -h 15 -holdScope valid[1]
+addSignal -h 15 -holdScope valid[0]
+addSignal -expanded -h 15 -UNSIGNED -HEX -holdScope exe[1:0]
+addSignal -h 15 -holdScope exe[1]
+addSignal -h 15 -holdScope exe[0]
 addSignal -h 15 -holdScope opr1_rdy[1:0]
-addSignal -expanded -h 15 -holdScope opr2_rdy[1:0]
-addSignal -h 15 -holdScope opr2_rdy[1]
-addSignal -h 15 -holdScope opr2_rdy[0]
+addSignal -h 15 -holdScope opr2_rdy[1:0]
 addSignal -h 15 -holdScope opr1_id[1:0]
 addSignal -h 15 -holdScope opr2_id[1:0]
 addSignal -h 15 -holdScope opr1_val[1:0]
 addSignal -h 15 -holdScope opr2_val[1:0]
 addSignal -h 15 -holdScope lsq_opr1_rdy
 endSubGroup "State"
-addSubGroup "Memory" -e FALSE
-addSignal -h 15 /mp4_tb/dut/i_cpu/i_lsq/data_read
+addSubGroup "Memory"
+addSignal -h 15 /mp4_tb/dut/i_cpu/i_lsq/data_mem_resp
+addSignal -h 15 -holdScope data_read
 addSignal -h 15 -holdScope data_write
 addSignal -h 15 -holdScope data_mem_address[31:0]
 addSignal -h 15 -holdScope data_mem_rdata[31:0]
 addSignal -h 15 -holdScope data_mem_wdata[31:0]
-addSignal -h 15 -holdScope data_mem_resp
 endSubGroup "Memory"
 addSubGroup "Execute" -e FALSE
 addSignal -h 15 /mp4_tb/dut/i_cpu/i_lsq/commit_lsq_en
@@ -216,7 +221,7 @@ addSignal -h 15 /mp4_tb/dut/i_cpu/i_rs1/cursor_issue_i[1:0]
 addSignal -h 15 -holdScope cursor_exe_i[1:0]
 addSignal -h 15 -holdScope cursor_exe_valid_i
 addSignal -h 15 -holdScope alu_finish
-addSubGroup "state"
+addSubGroup "state" -e FALSE
 addSignal -h 15 -UNSIGNED -HEX /mp4_tb/dut/i_cpu/i_rs1/valid[3:0]
 addSignal -h 15 -holdScope id[3:0]
 addSignal -h 15 -holdScope opc[3:0]
@@ -261,7 +266,38 @@ addSignal -h 15 /mp4_tb/dut/i_cpu/i_br/br_en
 addSignal -h 15 -holdScope rs2_opc[2:0]
 addSignal -h 15 -holdScope rs2_opr1[31:0]
 addSignal -h 15 -holdScope rs2_opr2[31:0]
-addGroup "G13"
+addGroup "G12" -e FALSE
+addSignal -h 15 /mp4_tb/dut/i_cpu/inst_mem_rdata[63:0]
+addSignal -h 15 -holdScope inst_mem_address[31:0]
+addSignal -h 15 -holdScope clk
+addSignal -h 15 /mp4_tb/dut/i_cpu/i_fetcher/inst_read
+addSignal -h 15 -holdScope inst_mem_address[31:0]
+addSignal -h 15 -holdScope inst_mem_resp
+addSignal -h 15 -holdScope inst_mem_rdata[63:0]
+addSignal -h 15 /mp4_tb/itf/inst_rdata[31:0]
+addGroup "G13" -e FALSE
+addSignal -h 15 /mp4_tb/dut/icache_pmem_read
+addSignal -h 15 -holdScope icache_pmem_resp
+addSignal -h 15 -holdScope icache_pmem_address[31:0]
+addSignal -h 15 -holdScope icache_pmem_rdata[255:0]
+addGroup "G14" -e FALSE
+addSignal -expanded -h 15 /mp4_tb/dut/icache/datapath/hit[1:0]
+addSignal -h 15 -holdScope hit[1]
+addSignal -h 15 -holdScope hit[0]
+addSignal -h 15 -holdScope tag_in[23:0]
+addSignal -h 15 -holdScope index[2:0]
+addSignal -h 15 -holdScope load_value[0]
+addSignal -h 15 /mp4_tb/dut/icache/datapath/MODULES[0]/TAG/load
+addSignal -h 15 -holdScope windex[2:0]
+addGroup "valid/tag/data(set0)" -e FALSE
+addSignal -h 15 /mp4_tb/dut/icache/datapath/MODULES[0]/VALID/data[6][0:0]
+addSignal -h 15 /mp4_tb/dut/icache/datapath/MODULES[0]/TAG/data[6][23:0]
+addSignal -h 15 /mp4_tb/dut/icache/datapath/MODULES[0]/DATA/data[6][255:0]
+addGroup "G16" -e FALSE
+addSignal -h 15 /mp4_tb/dut/icache/datapath/MODULES[0]/VALID/data[7:0]
+addSignal -h 15 /mp4_tb/dut/icache/datapath/MODULES[0]/TAG/data[7:0]
+addSignal -h 15 /mp4_tb/dut/icache/datapath/MODULES[0]/DATA/data[7:0]
+addGroup "G17"
 
 ; getSignalForm Scope Hierarchy Status
 ; active file of getSignalForm

@@ -193,10 +193,10 @@ always_comb begin
     end
 end
 
-// Output and other signals
+// Output and other signSals
 always_comb begin
-    lsq_isfull = (& valid) & (~ exe_finish);   // Similar logic to rob
     exe_finish = data_mem_resp;
+    lsq_isfull = (& valid) & (~ exe_finish);   // Similar logic to rob
     addr_i = opr1_val[cursor_exe] + imm_val[cursor_exe];
     wdata_i = opr2_val[cursor_exe];
     wdata_shift_i = wdata_i << ('d8 * addr_i[1:0]);

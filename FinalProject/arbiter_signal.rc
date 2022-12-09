@@ -1,0 +1,104 @@
+Magic 271485
+Revision Verdi_R-2020.12-SP1-1
+
+; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
+viewPort 0 25 1280 515 220 159
+
+; File list:
+; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
+openDirFile -d / "" "/home/angquan2/ooo/sim/dump.fsdb"
+
+; file time scale:
+; fileTimeScale ### s|ms|us|ns|ps
+
+; signal spacing:
+signalSpacing 5
+
+; windowTimeUnit is used for zoom, cursor & marker
+; waveform viewport range
+zoom 310139213.867188 311870786.132812
+cursor 311005000.000000
+marker 0.000000
+
+; user define markers
+; userMarker time_pos marker_name color linestyle
+; visible top row signal index
+top 12
+; marker line index
+markerPos 33
+
+; event list
+; addEvent event_name event_expression
+; curEvent event_name
+
+
+
+COMPLEX_EVENT_BEGIN
+
+
+COMPLEX_EVENT_END
+
+
+
+; toolbar current search type
+; curSTATUS search_type
+curSTATUS ByChange
+
+
+addGroup "arbiter to cacheline adaptor" -e FALSE
+activeDirFile "" "/home/angquan2/ooo/sim/dump.fsdb"
+addSignal -h 15 /mp4_tb/dut/arbiter_address[31:0]
+addSignal -h 15 -holdScope arbiter_rdata[255:0]
+addSignal -h 15 -holdScope arbiter_read
+addSignal -h 15 -holdScope arbiter_resp
+addSignal -h 15 -holdScope arbiter_wdata[255:0]
+addSignal -h 15 -holdScope arbiter_write
+addGroup "dcache to arbiter" -e FALSE
+addSignal -h 15 /mp4_tb/dut/dcache_pmem_address[31:0]
+addSignal -h 15 -holdScope dcache_pmem_wdata[255:0]
+addSignal -h 15 -holdScope dcache_pmem_resp
+addSignal -h 15 -holdScope dcache_pmem_rdata[255:0]
+addGroup "icache to arbiter" -e FALSE
+addSignal -h 15 /mp4_tb/dut/icache_pmem_address[31:0]
+addSignal -h 15 -holdScope icache_pmem_resp
+addSignal -h 15 -holdScope icache_pmem_rdata[255:0]
+addGroup "cpu to icache"
+addSignal -h 15 /mp4_tb/dut/icache_read
+addSignal -h 15 -holdScope icache_address[31:0]
+addSignal -h 15 -holdScope icache_resp
+addSignal -h 15 -holdScope icache_rdata[31:0]
+addGroup "cpu to dcache"
+addSignal -h 15 /mp4_tb/dut/dcache_address[31:0]
+addSignal -h 15 -holdScope dcache_wdata[31:0]
+addSignal -h 15 -holdScope dcache_read
+addSignal -h 15 -holdScope dcache_write
+addSignal -h 15 -holdScope dcache_rdata[31:0]
+addSignal -h 15 -holdScope dcache_resp
+addGroup "G6"
+addSignal -h 15 /mp4_tb/dut/icache_pmem_read
+addSignal -h 15 -holdScope dcache_pmem_read
+addSignal -h 15 -holdScope dcache_pmem_write
+addSignal -h 15 -UNSIGNED /mp4_tb/dut/arbiter_inst/state[1:0]
+addSignal -h 15 -holdScope hold_arbiter
+addGroup "G7"
+
+; getSignalForm Scope Hierarchy Status
+; active file of getSignalForm
+activeDirFile "" "/home/angquan2/ooo/sim/dump.fsdb"
+
+GETSIGNALFORM_SCOPE_HIERARCHY_BEGIN
+getSignalForm close
+
+"/mp4_tb"
+"/mp4_tb/dut"
+"/mp4_tb/dut/arbiter_inst"
+
+SCOPE_LIST_BEGIN
+"/mp4_tb"
+"/mp4_tb/dut"
+"/mp4_tb/dut/arbiter_inst"
+SCOPE_LIST_END
+
+GETSIGNALFORM_SCOPE_HIERARCHY_END
+
+

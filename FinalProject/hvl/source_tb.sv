@@ -3,10 +3,10 @@
 
 `define MAGIC_MEM 0
 `define PARAM_MEM 1
-`define MEMORY `MAGIC_MEM
+`define MEMORY `PARAM_MEM
 
 // Set these to 1 to enable the feature for CP2
-`define USE_SHADOW_MEMORY 0
+`define USE_SHADOW_MEMORY 1
 `define USE_RVFI_MONITOR 1
 
 `include "tb_itf.sv"
@@ -28,11 +28,10 @@ initial begin
 end
 
 /**************************** Halting Conditions *****************************/
-int timeout = 1000000000;
+int timeout = 100000000;
 always @(posedge tb_itf.clk) begin
     if (rvfi.halt) begin
         $display("TOP: Program halt properly");
-        $finish;
     end
     if (timeout == 0) begin
         $display("TOP: Timed out");
@@ -43,7 +42,7 @@ end
 
 always @(rvfi.errcode iff (rvfi.errcode != 0)) begin
     repeat(5) @(posedge itf.clk);
-    $display("TOP: Errcode: %0d", rvfi.errcode);
+    $display("TOP: RVFI Errcode: %0d", rvfi.errcode);
     $finish;
 end
 
